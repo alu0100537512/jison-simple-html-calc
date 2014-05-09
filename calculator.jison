@@ -6,20 +6,30 @@
 %%
 
 \s+                   /* skip whitespace */
-[0-9]+("."[0-9]+)?\b  return 'NUMBER'
-"*"                   return '*'
-"/"                   return '/'
-"-"                   return '-'
-"+"                   return '+'
-"^"                   return '^'
-"!"                   return '!'
-"%"                   return '%'
-"("                   return '('
-")"                   return ')'
-"PI"                  return 'PI'
-"E"                   return 'E'
-<<EOF>>               return 'EOF'
-.                     return 'INVALID'
+[0-9]+("."[0-9]+)?\b 	return 'NUMBER'
+"if" 					return 'IF'
+"then" 					return 'THEN'
+"else" 					return 'ELSE'
+"while"					return 'WHILE'
+"<=" 					return '<='
+">=" 					return '>='
+"<" 					return '<'
+">" 					return '>'
+"==" 					return '=='
+"=" 					return '='
+"*" 					return '*'
+"/" 					return '/'
+"-" 					return '-'
+"+" 					return '+'
+"^" 					return '^'
+"(" 					return '('
+")" 					return ')'
+"PI" 					return 'PI'
+"E" 					return 'E'
+";" 					return ';'
+[a-zA-Z][a-zA-Z0-9]* 	return 'ID'
+//<<EOF>> 				return 'EOF'
+. 						return 'INVALID'
 
 /lex
 
@@ -36,38 +46,63 @@
 
 %% /* language grammar */
 
-expressions
-    : e EOF
-        { typeof console !== 'undefined' ? console.log($1) : print($1);
-          return $1; }
+P   : S
+          {
+             return [ "<ul>\n<li> Postfijo<p> "+ $$ + "\n </ul>"];
+          }
+    ;
+
+S
+    : { $$ = ''; }
+    | e 
+    | e ';' S 
+      { $$ += $3;} 
+    
     ;
 
 e
-    : e '+' e
-        {$$ = $1+$3;}
+    : ID '=' e
+        {$$ = "<dd>" + $3 + "</dd><dd>" + "&" + $1 + "</dd><dd> = </dd>";}
+    | IF e THEN e
+        {$$ = "" + $2 + "<dd> jmpz else </dd>" + $4 + "<dt> :endif </dt>"}      
+    | IF e THEN e ELSE e
+        {$$ = "" + $2 + "<dd> jmpz else </dd>" + $4 + "<dd> jmp endif </dd><dt> :else </dt>" + $6 + "<dt> :endif </dt>"}
+    | WHILE e THEN e
+        {$$ = "" + $2 + "<dd> jmpz else </dd>" + $4 + "<dt> :endif </dt>"}    
+    | e '>=' e
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> >= </dd>";}
+    | e '<=' e
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> <= </dd>";}
+    | e '<' e
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> < </dd>";}
+    | e '>' e
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> > </dd>";}
+    | e '==' e
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> == </dd>";}
+    | e '+' e
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> + </dd>";}
     | e '-' e
-        {$$ = $1-$3;}
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> - </dd>";}
     | e '*' e
-        {$$ = $1*$3;}
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> * </dd>";}
     | e '/' e
-        {$$ = $1/$3;}
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> / </dd>";}
     | e '^' e
-        {$$ = Math.pow($1, $3);}
-    | e '!'
-        {
-          $$ = (function fact (n) { return n==0 ? 1 : fact(n-1) * n })($1);
-        }
-    | e '%'
-        {$$ = $1/100;}
+        {$$ = "<dd>" + $1 + "</dd><dd>" + $3 + "</dd><dd> ^ </dd>";}
     | '-' e %prec UMINUS
         {$$ = -$2;}
     | '(' e ')'
         {$$ = $2;}
     | NUMBER
-        {$$ = Number(yytext);}
+        {$$ = Number(yytext);} 
     | E
         {$$ = Math.E;}
     | PI
         {$$ = Math.PI;}
+    | ID
+        {$$ = "&" + $1}
+    | PI '=' e
+        {throw new Error("Constante =/ variable");}
+    | E '=' e
+        {throw new Error("Constante =/ variable");}
     ;
-
